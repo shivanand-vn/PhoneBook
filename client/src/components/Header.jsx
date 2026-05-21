@@ -10,6 +10,8 @@ const Header = ({ onMenuClick, onAddContactClick }) => {
   const { theme, toggleTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [errorSuggestions, setErrorSuggestions] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -35,23 +37,55 @@ const Header = ({ onMenuClick, onAddContactClick }) => {
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setSuggestions([]);
+      setLoadingSuggestions(false);
+      setErrorSuggestions(null);
       return;
     }
 
+    setLoadingSuggestions(true);
+    setErrorSuggestions(null);
+
     const delayDebounceFn = setTimeout(async () => {
       try {
-        const response = await apiFetch(`/api/contacts/suggestions?q=${searchQuery}`);
+        const response = await apiFetch(`/api/contacts/suggestions?q=${encodeURIComponent(searchQuery)}`);
         const data = await response.json();
         if (response.ok && data.success) {
           setSuggestions(data.suggestions);
+        } else {
+          setErrorSuggestions('Failed to load suggestions');
         }
       } catch (err) {
         console.error('Error fetching autocomplete suggestions:', err.message);
+        setErrorSuggestions('Network error');
+      } finally {
+        setLoadingSuggestions(false);
       }
     }, 250);
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery, token]);
+
+  // Highlight helper for suggestions
+  const highlightText = (text, highlight) => {
+    if (!text) return '';
+    if (!highlight.trim()) return text;
+    const escapedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedHighlight})`, 'gi');
+    const parts = text.split(regex);
+    return (
+      <>
+        {parts.map((part, index) => 
+          regex.test(part) ? (
+            <mark key={index} className="bg-primary/20 text-primary font-bold rounded-sm px-[2px]">
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </>
+    );
+  };
 
   // Autofill the first suggestion name into the input
   const topSuggestionName = suggestions.length > 0 ? suggestions[0].text : '';
@@ -95,11 +129,11 @@ const Header = ({ onMenuClick, onAddContactClick }) => {
           <span className="material-symbols-outlined">menu</span>
         </button>
         <img src={logoImg} alt="PhoneBook" className="lg:hidden h-8 w-8 rounded-lg object-cover border border-primary/20" />
-        <div className="lg:hidden font-headline-md text-[18px] font-bold text-primary truncate">PhoneBook</div>
+        <div className="lg:hidden font-headline-md text-[18px] font-bold text-primary truncate hidden sm:block">PhoneBook</div>
       </div>
 
       {/* Glassy Autocomplete Search Bar */}
-      <div className="relative flex-1 max-w-xl hidden md:block" ref={dropdownRef}>
+      <div className="relative flex-1 max-w-[150px] xs:max-w-[220px] sm:max-w-md md:max-w-xl block" ref={dropdownRef}>
         <form onSubmit={handleSearchSubmit}>
           <div className="relative flex items-center">
             {/* Glass background */}
@@ -166,7 +200,17 @@ const Header = ({ onMenuClick, onAddContactClick }) => {
             }}
           >
             <div className="p-2">
-              {suggestions.length > 0 ? (
+              {loadingSuggestions ? (
+                <div className="p-4 text-center text-sm text-on-surface-variant flex flex-col items-center gap-2">
+                  <span className="material-symbols-outlined text-[28px] text-primary animate-spin">sync</span>
+                  Searching...
+                </div>
+              ) : errorSuggestions ? (
+                <div className="p-4 text-center text-sm text-error flex flex-col items-center gap-2">
+                  <span className="material-symbols-outlined text-[28px] text-error">error</span>
+                  {errorSuggestions}
+                </div>
+              ) : suggestions.length > 0 ? (
                 <>
                   <div className="px-4 py-2 text-[10px] font-semibold text-on-surface-variant/70 tracking-widest uppercase border-b border-primary/10 mb-1">
                     Suggestions
@@ -183,14 +227,13 @@ const Header = ({ onMenuClick, onAddContactClick }) => {
                         className="w-8 h-8 rounded-full border border-primary/25 object-cover flex-shrink-0"
                       />
                       <div className="overflow-hidden flex-1">
-                        {/* Highlight matching part of name */}
+                        {/* Highlight matching part of name and subtext */}
                         <span className="block text-sm text-on-surface font-medium truncate">
-                          <span className="text-primary font-bold">
-                            {item.text.slice(0, searchQuery.length)}
-                          </span>
-                          {item.text.slice(searchQuery.length)}
+                          {highlightText(item.text, searchQuery)}
                         </span>
-                        <span className="block text-[11px] text-on-surface-variant truncate">{item.subtext}</span>
+                        <span className="block text-[11px] text-on-surface-variant truncate">
+                          {highlightText(item.subtext, searchQuery)}
+                        </span>
                       </div>
                       <span className="material-symbols-outlined text-[14px] text-on-surface-variant/40 group-hover:text-primary transition-colors">arrow_forward</span>
                     </button>

@@ -49,8 +49,10 @@ const contactSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Compound index to quickly find duplicates for a specific user
+// Compound indexes with user field for query optimization and isolation
+contactSchema.index({ user: 1, name: 1 });
 contactSchema.index({ user: 1, phone: 1 });
 contactSchema.index({ user: 1, email: 1 });
+contactSchema.index({ user: 1, company: 1 });
 
 module.exports = mongoose.model('Contact', contactSchema);

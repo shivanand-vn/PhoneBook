@@ -6,7 +6,6 @@ const errorHandler = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/authRoutes');
 const contactRoutes = require('./routes/contactRoutes');
-const searchRoutes = require('./routes/searchRoutes');
 const userRoutes = require('./routes/userRoutes');
 
 const app = express();
@@ -17,7 +16,7 @@ app.use(helmet({
 }));
 
 // Enable CORS
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173,https://phone-book-dir.vercel.app')
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173,https://phone-book-dir.vercel.app,https://phone-hook-dir.vercel.app')
   .split(',')
   .map(origin => origin.trim());
 
@@ -25,7 +24,11 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*') || origin.startsWith('http://localhost:')) {
+    
+    const isVercel = origin.endsWith('.vercel.app');
+    const isLocal = origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:');
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*') || isLocal || isVercel) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -51,7 +54,6 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/contacts', contactRoutes);
-app.use('/api/search', searchRoutes);
 app.use('/api/users', userRoutes);
 
 // Catch 404

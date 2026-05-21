@@ -254,6 +254,11 @@ const deleteContact = async (req, res, next) => {
   }
 };
 
+// Helper to escape regex special characters
+const escapeRegExp = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 // @desc    Smart Search contacts
 // @route   GET /api/contacts/search
 // @access  Private
@@ -264,7 +269,8 @@ const searchContacts = async (req, res, next) => {
       return res.json({ success: true, contacts: [] });
     }
 
-    const regex = new RegExp(q, 'i');
+    const escapedQ = escapeRegExp(q.trim());
+    const regex = new RegExp(escapedQ, 'i');
     
     // Performance optimized lookup with indexes
     const contacts = await Contact.find({
@@ -296,26 +302,41 @@ const getSuggestions = async (req, res, next) => {
       return res.json({ success: true, suggestions: [] });
     }
 
-    const regex = new RegExp('^' + q, 'i'); // matches starting prefix
+    const escapedQ = escapeRegExp(q.trim());
+    const regex = new RegExp(escapedQ, 'i');
     
-    // Fetch contacts where Name or Company matches query prefix
+    // Fetch contacts matching partial query across name, phone, email, and company
     const contacts = await Contact.find({
       user: req.user._id,
       $or: [
         { name: regex },
+        { phone: regex },
+        { email: regex },
         { company: regex }
       ]
     })
-    .select('name company email profileImage')
+    .select('name company email phone profileImage')
     .limit(10);
 
     // Format suggestions
-    const suggestions = contacts.map(c => ({
-      id: c._id,
-      text: c.name,
-      subtext: c.company || c.email || '',
-      avatar: c.profileImage || ''
-    }));
+    const suggestions = contacts.map(c => {
+      // Create detailed subtext depending on what matched (company, email, or phone)
+      let subtext = c.company || '';
+      if (c.email && c.email.toLowerCase().includes(q.toLowerCase())) {
+        subtext = c.email;
+      } else if (c.phone && c.phone.includes(q)) {
+        subtext = c.phone;
+      } else if (!subtext && c.email) {
+        subtext = c.email;
+      }
+      
+      return {
+        id: c._id,
+        text: c.name,
+        subtext: subtext || 'No company/email',
+        avatar: c.profileImage || ''
+      };
+    });
 
     res.json({
       success: true,

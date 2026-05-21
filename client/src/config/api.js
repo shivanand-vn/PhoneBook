@@ -1,7 +1,14 @@
-export const API_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.PROD 
-    ? 'https://phonebook-mpno.onrender.com' 
-    : 'http://localhost:5000');
+const getApiUrl = () => {
+  if (typeof window !== 'undefined') {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!isLocal) {
+      return 'https://phonebook-mpno.onrender.com';
+    }
+  }
+  return import.meta.env.VITE_API_URL || 'http://localhost:5000';
+};
+
+export const API_URL = getApiUrl();
 
 // Centralized fetch wrapper to handle base URL, CORS credentials, 
 // automatic JSON headers, JWT token authorization, and token expiration logout.
