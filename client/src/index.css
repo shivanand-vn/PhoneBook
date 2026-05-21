@@ -53,3 +53,53 @@ body {
 .material-symbols-outlined.filled {
   font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
+
+/* Winter Chill theme inputs, textareas, and selects color combination overrides */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+textarea,
+select,
+option {
+  background-color: #0b2e33 !important; /* Winter chill dark #0B2E33 */
+  border: 1px solid #4f7c82 !important; /* Winter chill border #4F7C82 */
+  color: #c6e9ef !important; /* Text on surface */
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="tel"]:focus,
+textarea:focus,
+select:focus {
+  border-color: #8bc3c9 !important; /* Winter chill light #8BC3C9 */
+  box-shadow: 0 0 0 1px #8bc3c9 !important;
+  outline: none !important;
+}
+
+/* Exclude header search input from generic text-input styles */
+header input[type="text"],
+header input[type="text"]:focus {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #c6e9ef !important;
+}
+
+/* Autofill overrides for winter chill theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: #c6e9ef !important;
+  transition: background-color 5000s ease-in-out 0s;
+  box-shadow: inset 0 0 20px 20px #0b2e33 !important;
+  border-color: #4f7c82 !important;
+}
+
+input:-webkit-autofill:focus {
+  border-color: #8bc3c9 !important;
+}
+

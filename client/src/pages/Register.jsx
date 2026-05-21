@@ -6,30 +6,11 @@ const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [avatar, setAvatar] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(null);
   const [localError, setLocalError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register } = useAuth();
   const navigate = useNavigate();
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setLocalError('File size must be less than 5MB');
-        return;
-      }
-      if (!file.type.startsWith('image/')) {
-        setLocalError('Only image files are allowed');
-        return;
-      }
-      setAvatar(file);
-      setAvatarPreview(URL.createObjectURL(file));
-      setLocalError(null);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,9 +21,6 @@ const Register = () => {
     formData.append('name', name);
     formData.append('email', email);
     formData.append('password', password);
-    if (avatar) {
-      formData.append('avatar', avatar);
-    }
 
     const result = await register(formData);
     setIsSubmitting(false);
@@ -83,29 +61,6 @@ const Register = () => {
                 {localError}
               </div>
             )}
-
-            {/* Avatar Upload */}
-            <div className="flex flex-col items-center gap-sm mb-lg">
-              <div className="relative group">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-primary/20 bg-surface-container-high flex items-center justify-center relative shadow-[0_0_12px_rgba(184,227,233,0.1)]">
-                  {avatarPreview ? (
-                    <img src={avatarPreview} alt="Avatar Preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="material-symbols-outlined text-[36px] text-on-surface-variant/40">person</span>
-                  )}
-                </div>
-                <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary-container text-on-primary border border-primary/20 flex items-center justify-center cursor-pointer hover:opacity-90 transition-colors shadow-sm">
-                  <span className="material-symbols-outlined text-[18px]">photo_camera</span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                  />
-                </label>
-              </div>
-              <span className="text-[12px] text-on-surface-variant">Upload profile image (optional)</span>
-            </div>
 
             {/* Name Input */}
             <div>
