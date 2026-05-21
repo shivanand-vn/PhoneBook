@@ -242,3 +242,21 @@ input:-webkit-autofill:focus {
 .animate-scale-up {
   animation: scaleUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+/* Glassy premium header without breaking child backdrop-filters */
+.premium-header {
+  background: transparent !important;
+}
+.premium-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(var(--color-surface) / 0.8);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  pointer-events: none;
+}
+.dark .premium-header::before {
+  background: rgba(var(--color-surface-dim) / 0.8);
+}

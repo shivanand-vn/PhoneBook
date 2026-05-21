@@ -14,7 +14,7 @@ const validate = (req, res, next) => {
 
 const validateContact = [
   check('name', 'Name is required').notEmpty().trim(),
-  check('phone', 'Phone number is required').notEmpty().trim(),
+  check('phone', 'Phone number must be exactly 10 digits and start with 9, 8, 7, or 6').trim().matches(/^[6789]\d{9}$/),
   check('email', 'Please enter a valid email address').optional({ checkFalsy: true }).isEmail().normalizeEmail(),
   check('company').optional().trim(),
   check('address').optional().trim(),

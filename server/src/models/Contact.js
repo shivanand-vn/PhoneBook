@@ -11,7 +11,13 @@ const contactSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Phone number is required'],
     trim: true,
-    index: true
+    index: true,
+    validate: {
+      validator: function(v) {
+        return /^[6789]\d{9}$/.test(v);
+      },
+      message: props => `${props.value} is not a valid 10-digit phone number starting with 9, 8, 7, or 6!`
+    }
   },
   email: {
     type: String,

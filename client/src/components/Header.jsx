@@ -119,7 +119,7 @@ const Header = ({ onMenuClick, onAddContactClick }) => {
   };
 
   return (
-    <header className="h-[72px] lg:pl-64 fixed top-0 left-0 right-0 border-b border-primary/20 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl z-30 transition-all flex items-center justify-between px-md gap-md">
+    <header className="h-[72px] lg:pl-64 fixed top-0 left-0 right-0 border-b border-primary/20 premium-header z-30 transition-all flex items-center justify-between px-md gap-md">
       {/* Left: Menu toggle and branding */}
       <div className="flex items-center gap-md">
         <button
@@ -289,7 +289,7 @@ const Header = ({ onMenuClick, onAddContactClick }) => {
         )}
 
         {/* Avatar + Glassy Dropdown */}
-        <div className="relative animate-fade-in" ref={avatarDropdownRef}>
+        <div className="relative" ref={avatarDropdownRef}>
           <button
             onClick={() => setAvatarDropdownOpen(!avatarDropdownOpen)}
             className="flex items-center gap-2 p-1 rounded-full border border-primary/20 hover:border-primary/50 transition-all duration-200 hover:scale-105 active:scale-95"
@@ -303,11 +303,11 @@ const Header = ({ onMenuClick, onAddContactClick }) => {
 
           {avatarDropdownOpen && (
             <div
-              className="absolute right-0 mt-3 w-60 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-50 overflow-hidden border border-primary/20 animate-fade-in"
+              className="absolute right-0 mt-3 w-60 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.25)] z-50 overflow-hidden border border-white/30 dark:border-primary/20"
               style={{
-                background: 'rgba(var(--color-surface-container-lowest) / 0.4)',
-                backdropFilter: 'blur(30px)',
-                WebkitBackdropFilter: 'blur(30px)',
+                background: 'linear-gradient(135deg, rgb(var(--color-surface-container-lowest) / 0.45) 0%, rgb(var(--color-surface-container-lowest) / 0.15) 100%)',
+                backdropFilter: 'blur(25px)',
+                WebkitBackdropFilter: 'blur(25px)',
               }}
             >
               {/* User info header */}

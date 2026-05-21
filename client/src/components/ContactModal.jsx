@@ -67,9 +67,17 @@ const ContactModal = ({ isOpen, onClose, contact, onSaveSuccess }) => {
     setError(null);
     setIsSubmitting(true);
 
+    const cleanedPhone = phone.trim();
+    const phoneRegex = /^[6789]\d{9}$/;
+    if (!phoneRegex.test(cleanedPhone)) {
+      setError('Phone number must be exactly 10 digits and start with 9, 8, 7, or 6');
+      setIsSubmitting(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.append('name', name);
-    formData.append('phone', phone);
+    formData.append('phone', cleanedPhone);
     formData.append('email', email);
     formData.append('company', company);
     formData.append('address', address);
@@ -169,7 +177,7 @@ const ContactModal = ({ isOpen, onClose, contact, onSaveSuccess }) => {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 required
-                placeholder="(208) 555-0112"
+                placeholder="e.g., 9876543210"
                 className="w-full h-[40px] px-md bg-surface-container/60 border border-primary/20 rounded-lg text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-all placeholder:text-on-surface-variant/40"
               />
             </div>
