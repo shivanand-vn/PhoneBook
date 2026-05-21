@@ -107,28 +107,6 @@ const Login = () => {
               {!isSubmitting && <span className="material-symbols-outlined text-[18px]">arrow_forward</span>}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="mt-xl mb-lg relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-primary/10"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-sm bg-surface-container-low font-body-md text-body-md text-on-surface-variant">Or continue with</span>
-            </div>
-          </div>
-
-          {/* Social Logins */}
-          <div className="grid grid-cols-2 gap-md">
-            <button className="h-[48px] border border-primary/20 hover:bg-surface-variant/40 rounded-lg flex items-center justify-center gap-sm font-label-md text-label-md text-on-surface transition-colors" type="button">
-              <span className="material-symbols-outlined text-[18px]">login</span>
-              Google
-            </button>
-            <button className="h-[48px] border border-primary/20 hover:bg-surface-variant/40 rounded-lg flex items-center justify-center gap-sm font-label-md text-label-md text-on-surface transition-colors" type="button">
-              <span className="material-symbols-outlined text-[18px]">code</span>
-              GitHub
-            </button>
-          </div>
         </div>
 
         {/* Footer */}

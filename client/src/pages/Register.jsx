@@ -50,8 +50,7 @@ const Register = () => {
               </div>
               <h1 className="font-headline-md text-headline-md text-primary">Phonebook AI</h1>
             </div>
-            <h2 className="font-headline-sm text-headline-sm text-on-surface mb-sm">Create account</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant">Sign up to get started with your directory</p>
+            <h2 className="font-headline-sm text-headline-sm text-on-surface mb-sm">Sign Up</h2>
           </div>
 
           {/* Form */}
