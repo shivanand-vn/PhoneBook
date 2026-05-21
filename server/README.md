@@ -1,4 +1,4 @@
-# Phonebook AI API Server
+# PhoneBook API Server
 
 This is the backend API server for the Smart Phonebook Search Engine.
 

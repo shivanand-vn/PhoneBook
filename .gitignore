@@ -39,3 +39,6 @@ uploads/
 
 # Temporary / scratch files
 *.local
+
+# Custom ignores
+stitch_nexcontact_smart_phonebook/

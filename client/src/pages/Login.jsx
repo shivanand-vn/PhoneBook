@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import logoImg from '../assets/logo.jpeg';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -20,7 +22,7 @@ const Login = () => {
     setIsSubmitting(false);
 
     if (result.success) {
-      navigate('/');
+      navigate('/dashboard');
     } else {
       setLocalError(result.message || 'Invalid email or password');
     }
@@ -39,10 +41,12 @@ const Login = () => {
           {/* Header */}
           <div className="text-center mb-xl">
             <div className="flex justify-center items-center gap-sm mb-lg">
-              <div className="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container">
-                <span className="material-symbols-outlined font-semibold" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-              </div>
-              <h1 className="font-headline-md text-headline-md text-primary">Phonebook AI</h1>
+              <img
+                src={logoImg}
+                alt="PhoneBook Logo"
+                className="w-10 h-10 rounded-lg object-cover border border-primary/20 shadow-md"
+              />
+              <h1 className="font-headline-md text-headline-md text-primary">PhoneBook</h1>
             </div>
             <h2 className="font-headline-sm text-headline-sm text-on-surface mb-sm">Welcome back</h2>
             <p className="font-body-md text-body-md text-on-surface-variant">Sign in to your account to continue</p>
@@ -86,20 +90,29 @@ const Login = () => {
                   <span className="material-symbols-outlined text-[20px]">lock</span>
                 </span>
                 <input
-                  className="w-full h-[48px] pl-[44px] pr-md bg-surface-container border border-primary/20 rounded-lg font-body-md text-body-md text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:border-primary-container focus:ring-0 transition-colors"
+                  className="w-full h-[48px] pl-[44px] pr-[48px] bg-surface-container border border-primary/20 rounded-lg font-body-md text-body-md text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:border-primary-container focus:ring-0 transition-colors"
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-md text-on-surface-variant/60 hover:text-primary transition-colors focus:outline-none"
+                >
+                  <span className="material-symbols-outlined text-[20px]">
+                    {showPassword ? 'visibility_off' : 'visibility'}
+                  </span>
+                </button>
               </div>
             </div>
 
             {/* Submit Button */}
             <button
-              className="w-full h-[48px] bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg font-label-lg text-label-lg transition-colors flex items-center justify-center gap-sm mt-lg disabled:opacity-50 shadow-[0_0_12px_rgba(184,227,233,0.15)]"
+              className="w-full btn-premium-primary mt-lg"
               type="submit"
               disabled={isSubmitting}
             >

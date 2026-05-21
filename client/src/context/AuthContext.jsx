@@ -29,12 +29,10 @@ export const AuthProvider = ({ children }) => {
         if (response.ok && data.success) {
           setUser(data.user);
         } else {
-          // Token expired or invalid
           logout();
         }
       } catch (err) {
         console.error('Failed to load profile:', err.message);
-        // Do not log out immediately on network error, keep token
       } finally {
         setLoading(false);
       }
@@ -49,17 +47,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
+      if (!response.ok) throw new Error(data.message || 'Login failed');
 
       localStorage.setItem('token', data.token);
       setToken(data.token);
@@ -77,14 +70,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
-        body: formData // Content-Type header omitted, browser sets boundary
+        body: formData
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
+      if (!response.ok) throw new Error(data.message || 'Registration failed');
 
       localStorage.setItem('token', data.token);
       setToken(data.token);
@@ -92,6 +82,25 @@ export const AuthProvider = ({ children }) => {
       return { success: true };
     } catch (err) {
       setError(err.message);
+      return { success: false, message: err.message };
+    }
+  };
+
+  // Update Profile (name + avatar)
+  const updateProfile = async (formData) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/profile`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Update failed');
+
+      if (data.user) setUser(data.user);
+      return { success: true, user: data.user };
+    } catch (err) {
       return { success: false, message: err.message };
     }
   };
@@ -108,12 +117,14 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         token,
         loading,
         error,
         login,
         register,
         logout,
+        updateProfile,
         setError
       }}
     >

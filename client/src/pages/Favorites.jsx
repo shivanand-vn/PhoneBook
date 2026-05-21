@@ -113,7 +113,10 @@ const Favorites = () => {
                 )}
                 <div>
                   <h4 className="font-label-lg text-label-lg text-on-surface font-semibold group-hover:text-primary transition-colors">{contact.name}</h4>
-                  <p className="font-code-sm text-code-sm text-on-surface-variant truncate mt-[2px]">{contact.company || 'Private Address'}</p>
+                  <p className="font-code-sm text-code-sm text-primary truncate mt-[2px] font-medium">{contact.company || 'Private Address'}</p>
+                  {contact.email && (
+                    <p className="text-[11px] text-on-surface-variant/80 truncate mt-[2px]">{contact.email}</p>
+                  )}
                   <p className="text-[11px] text-on-surface-variant/70 mt-[4px] font-mono">{contact.phone}</p>
                 </div>
               </div>
@@ -121,7 +124,7 @@ const Favorites = () => {
               <div className="mt-sm pt-xs border-t border-primary/10 flex items-center justify-between">
                 <div className="flex flex-wrap gap-xs">
                   {contact.tags && contact.tags.slice(0, 2).map(t => (
-                    <span key={t} className="px-xs py-[2px] bg-inverse-primary/20 text-tertiary-fixed-dim rounded font-label-md text-[10px] border border-inverse-primary/30 leading-none">
+                    <span key={t} className="px-xs py-[2px] bg-primary/15 text-primary rounded font-label-md text-[10px] border border-primary/30 leading-none font-semibold">
                       {t}
                     </span>
                   ))}

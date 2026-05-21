@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import ContactModal from '../components/ContactModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const Contacts = () => {
   const { token } = useAuth();
@@ -30,6 +31,7 @@ const Contacts = () => {
   // Modal Control
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   // Unique companies and tags for filters
   const [allTags, setAllTags] = useState([]);
@@ -156,9 +158,14 @@ const Contacts = () => {
     }
   };
 
-  const handleDeleteContact = async (e, contactId) => {
+  const handleDeleteContact = (e, contactId) => {
     e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this contact?')) return;
+    setDeleteConfirmId(contactId);
+  };
+
+  const handleConfirmDelete = async () => {
+    const contactId = deleteConfirmId;
+    setDeleteConfirmId(null);
     try {
       const response = await fetch(`${API_URL}/contacts/${contactId}`, {
         method: 'DELETE',
@@ -236,7 +243,7 @@ const Contacts = () => {
         <div className="flex gap-sm w-full md:w-auto">
           <button 
             onClick={handleOpenAddModal}
-            className="flex-1 md:flex-none flex items-center justify-center gap-xs px-md py-sm bg-primary-container text-on-primary-container rounded-lg font-label-lg text-label-lg hover:opacity-95 transition-all shadow-[0_0_12px_rgba(184,227,233,0.15)]"
+            className="flex-1 md:flex-none flex items-center justify-center gap-xs px-md py-sm bg-primary-container text-on-primary-container rounded-full font-label-lg text-label-lg transition-all duration-300 shadow-[0_0_16px_rgba(var(--color-primary-container),0.3)] hover:shadow-[0_0_24px_rgba(var(--color-primary-container),0.5)] hover:scale-105 active:scale-95 font-bold"
           >
             <span className="material-symbols-outlined text-[18px]">add</span> Add Contact
           </button>
@@ -267,6 +274,14 @@ const Contacts = () => {
           <div>
             <h3 className="font-headline-sm text-headline-sm text-primary mb-md">Active Segments</h3>
             <div className="flex flex-wrap gap-xs">
+              <span 
+                onClick={() => { setSelectedTag(''); setPage(1); }}
+                className={`px-sm py-xs bg-surface-container border rounded-full font-label-md text-label-md text-on-surface flex items-center gap-xs hover:border-primary transition-colors cursor-pointer ${
+                  selectedTag === '' ? 'border-primary' : 'border-inverse-primary/30'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-primary-container"></span> All
+              </span>
               {allTags.slice(0, 5).map((tag, idx) => {
                 const colors = ['bg-primary-container', 'bg-secondary', 'bg-tertiary-fixed-dim', 'bg-outline'];
                 return (
@@ -281,7 +296,7 @@ const Contacts = () => {
                   </span>
                 );
               })}
-              {allTags.length === 0 && (
+              {allTags.length === 0 && selectedTag !== '' && (
                 <span className="text-xs text-on-surface-variant/50">No segments defined yet.</span>
               )}
             </div>
@@ -291,10 +306,10 @@ const Contacts = () => {
               {/* Favorites toggle */}
               <button
                 onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setPage(1); }}
-                className={`h-[32px] px-sm rounded-lg text-xs font-medium border transition-all flex items-center gap-xs ${
+                className={`h-[32px] px-md rounded-full text-xs font-semibold border transition-all duration-300 flex items-center gap-xs hover:scale-105 active:scale-95 ${
                   showFavoritesOnly
-                    ? 'bg-primary-container/15 border-primary text-primary-container'
-                    : 'border-primary/10 text-on-surface-variant hover:bg-surface-variant/30'
+                    ? 'bg-primary-container/15 border-primary text-primary-container shadow-sm'
+                    : 'border-outline/20 text-on-surface-variant hover:bg-surface-container-high hover:text-primary'
                 }`}
               >
                 <span className="material-symbols-outlined text-[16px] fill-current">star</span>
@@ -305,7 +320,7 @@ const Contacts = () => {
               <select
                 value={selectedCompany}
                 onChange={(e) => { setSelectedCompany(e.target.value); setPage(1); }}
-                className="h-[32px] px-sm bg-surface-container/60 border border-primary/10 rounded-lg text-xs text-on-surface focus:outline-none focus:border-primary"
+                className="h-[32px] px-md bg-surface-container/60 border border-outline/20 rounded-full text-xs text-on-surface focus:outline-none focus:border-primary cursor-pointer hover:border-primary transition-colors font-semibold"
               >
                 <option value="">All Companies</option>
                 {allCompanies.map(c => (
@@ -317,7 +332,7 @@ const Contacts = () => {
               <select
                 value={sortBy}
                 onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
-                className="h-[32px] px-sm bg-surface-container/60 border border-primary/10 rounded-lg text-xs text-on-surface focus:outline-none focus:border-primary"
+                className="h-[32px] px-md bg-surface-container/60 border border-outline/20 rounded-full text-xs text-on-surface focus:outline-none focus:border-primary cursor-pointer hover:border-primary transition-colors font-semibold"
               >
                 <option value="name">Sort: Alphabetical</option>
                 <option value="recently_added">Sort: Recently Added</option>
@@ -393,7 +408,10 @@ const Contacts = () => {
                   {/* Text labels */}
                   <div className="overflow-hidden pr-6">
                     <h4 className="font-label-lg text-label-lg text-on-surface font-semibold truncate group-hover:text-primary transition-colors">{contact.name}</h4>
-                    <p className="font-code-sm text-code-sm text-on-surface-variant truncate mt-[2px]">{contact.company || 'Private Address'}</p>
+                    <p className="font-code-sm text-code-sm text-primary truncate mt-[2px] font-medium">{contact.company || 'Private Address'}</p>
+                    {contact.email && (
+                      <p className="text-[11px] text-on-surface-variant/80 truncate mt-[2px]">{contact.email}</p>
+                    )}
                     <p className="text-[11px] text-on-surface-variant/70 mt-[4px] font-mono">{contact.phone}</p>
                   </div>
                 </div>
@@ -402,7 +420,7 @@ const Contacts = () => {
                 <div className="mt-sm pt-xs border-t border-primary/10 flex items-center justify-between">
                   <div className="flex flex-wrap gap-xs overflow-hidden max-w-[160px] h-[20px]">
                     {contact.tags && contact.tags.slice(0, 2).map(t => (
-                      <span key={t} className="px-xs py-[2px] bg-inverse-primary/20 text-tertiary-fixed-dim rounded font-label-md text-[10px] border border-inverse-primary/30 leading-none">
+                      <span key={t} className="px-xs py-[2px] bg-primary/15 text-primary rounded font-label-md text-[10px] border border-primary/30 leading-none font-semibold">
                         {t}
                       </span>
                     ))}
@@ -452,7 +470,7 @@ const Contacts = () => {
             <button
               onClick={() => setPage(page - 1)}
               disabled={page === 1}
-              className="w-8 h-8 rounded border border-primary/15 flex items-center justify-center hover:bg-surface-variant/30 disabled:opacity-30 disabled:pointer-events-none transition-all"
+              className="w-8 h-8 rounded-full border border-outline/20 flex items-center justify-center hover:bg-surface-container-high text-on-surface hover:text-primary disabled:opacity-30 disabled:pointer-events-none transition-all hover:scale-105 active:scale-95 duration-200"
             >
               <span className="material-symbols-outlined text-[16px]">chevron_left</span>
             </button>
@@ -460,7 +478,7 @@ const Contacts = () => {
             <button
               onClick={() => setPage(page + 1)}
               disabled={page === totalPages}
-              className="w-8 h-8 rounded border border-primary/15 flex items-center justify-center hover:bg-surface-variant/30 disabled:opacity-30 disabled:pointer-events-none transition-all"
+              className="w-8 h-8 rounded-full border border-outline/20 flex items-center justify-center hover:bg-surface-container-high text-on-surface hover:text-primary disabled:opacity-30 disabled:pointer-events-none transition-all hover:scale-105 active:scale-95 duration-200"
             >
               <span className="material-symbols-outlined text-[16px]">chevron_right</span>
             </button>
@@ -474,6 +492,15 @@ const Contacts = () => {
         onClose={() => setIsModalOpen(false)}
         contact={selectedContact}
         onSaveSuccess={handleSaveSuccess}
+      />
+
+      {/* Custom delete confirm modal */}
+      <ConfirmModal
+        isOpen={deleteConfirmId !== null}
+        title="Delete Contact"
+        message="Are you sure you want to delete this contact? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirmId(null)}
       />
     </div>
   );

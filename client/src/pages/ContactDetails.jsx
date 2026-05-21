@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth, API_URL } from '../context/AuthContext';
 import ContactModal from '../components/ContactModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const ContactDetails = () => {
   const { token } = useAuth();
@@ -15,6 +16,7 @@ const ContactDetails = () => {
   
   // Modal Edit Control
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
   // Local-first notes
   const [notes, setNotes] = useState('');
@@ -69,8 +71,12 @@ const ContactDetails = () => {
     }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this contact?')) return;
+  const handleDelete = () => {
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleteConfirmOpen(false);
     try {
       const response = await fetch(`${API_URL}/contacts/${id}`, {
         method: 'DELETE',
@@ -203,7 +209,7 @@ const ContactDetails = () => {
           <div className="flex flex-wrap gap-xs w-full md:w-auto justify-center">
             <button
               onClick={handleFavoriteToggle}
-              className="h-[36px] px-sm bg-surface-container-low border border-primary/20 hover:border-primary transition-all text-on-surface rounded-lg flex items-center justify-center"
+              className="h-[36px] w-[36px] bg-surface-container-low border border-outline/20 hover:border-primary hover:text-primary transition-all rounded-full flex items-center justify-center hover:scale-105 active:scale-95 duration-200"
               title={contact.favorite ? 'Unfavorite' : 'Favorite'}
             >
               <span className={`material-symbols-outlined text-[20px] ${contact.favorite ? 'text-secondary filled' : 'opacity-40'}`}>
@@ -212,13 +218,13 @@ const ContactDetails = () => {
             </button>
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="h-[36px] px-md bg-primary-container text-on-primary-container rounded-lg font-label-lg text-xs hover:opacity-95 transition-all flex items-center gap-xs shadow-[0_0_12px_rgba(184,227,233,0.15)]"
+              className="h-[36px] px-md bg-primary-container text-on-primary-container rounded-full font-label-lg text-xs hover:scale-105 active:scale-95 transition-all flex items-center gap-xs shadow-[0_0_16px_rgba(var(--color-primary-container),0.3)] duration-200 font-semibold"
             >
               <span className="material-symbols-outlined text-[16px]">edit</span> Edit Profile
             </button>
             <button
               onClick={handleDelete}
-              className="h-[36px] px-sm border border-error/30 hover:bg-error-container/10 text-error rounded-lg transition-colors flex items-center justify-center"
+              className="h-[36px] w-[36px] border border-error/30 hover:bg-error-container/10 text-error rounded-full transition-all flex items-center justify-center hover:scale-105 active:scale-95 duration-200"
               title="Delete Contact"
             >
               <span className="material-symbols-outlined text-[16px]">delete</span>
@@ -292,7 +298,7 @@ const ContactDetails = () => {
           <div className="bg-surface-container border border-primary/20 rounded-lg p-md shadow-sm space-y-sm">
             <div className="flex items-center gap-xs mb-xs">
               <span className="material-symbols-outlined text-primary-container text-[20px]">sticky_note_2</span>
-              <h3 className="font-headline-sm text-headline-sm text-primary">CRM Notepad</h3>
+              <h3 className="font-headline-sm text-headline-sm text-primary">Note:</h3>
             </div>
             <textarea
               value={notes}
@@ -358,6 +364,15 @@ const ContactDetails = () => {
         onClose={() => setIsEditModalOpen(false)}
         contact={contact}
         onSaveSuccess={handleSaveSuccess}
+      />
+
+      {/* Custom delete confirm modal */}
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        title="Delete Contact"
+        message="Are you sure you want to delete this contact? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
       />
     </div>
   );

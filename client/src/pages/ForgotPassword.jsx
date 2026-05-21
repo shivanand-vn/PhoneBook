@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../context/AuthContext';
+import logoImg from '../assets/logo.jpeg';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -49,10 +50,12 @@ const ForgotPassword = () => {
           {/* Header */}
           <div className="text-center mb-xl">
             <div className="flex justify-center items-center gap-sm mb-lg">
-              <div className="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container">
-                <span className="material-symbols-outlined font-semibold" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-              </div>
-              <h1 className="font-headline-md text-headline-md text-primary">Phonebook AI</h1>
+              <img
+                src={logoImg}
+                alt="PhoneBook Logo"
+                className="w-10 h-10 rounded-lg object-cover border border-primary/20 shadow-md"
+              />
+              <h1 className="font-headline-md text-headline-md text-primary">PhoneBook</h1>
             </div>
             <h2 className="font-headline-sm text-headline-sm text-on-surface mb-sm">Reset Password</h2>
             <p className="font-body-md text-body-md text-on-surface-variant">Enter your email and we'll send you a password reset link</p>
@@ -93,7 +96,7 @@ const ForgotPassword = () => {
 
             {/* Submit Button */}
             <button
-              className="w-full h-[48px] bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg font-label-lg text-label-lg transition-colors flex items-center justify-center gap-sm mt-lg disabled:opacity-50 shadow-[0_0_12px_rgba(184,227,233,0.15)]"
+              className="w-full btn-premium-primary mt-lg"
               type="submit"
               disabled={isSubmitting || !!message}
             >

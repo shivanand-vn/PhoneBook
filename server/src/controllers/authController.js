@@ -138,20 +138,20 @@ const forgotPassword = async (req, res, next) => {
 
     const htmlMessage = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e0ff; border-radius: 8px; background-color: #0b1326; color: #dae2fd;">
-        <h2 style="color: #c0c1ff; border-bottom: 1px solid #464554; padding-bottom: 10px;">Phonebook AI Password Reset</h2>
+        <h2 style="color: #c0c1ff; border-bottom: 1px solid #464554; padding-bottom: 10px;">PhoneBook Password Reset</h2>
         <p>You are receiving this email because you (or someone else) have requested the reset of a password for your account.</p>
         <p>Please click on the button below to reset your password. This link is only valid for 10 minutes:</p>
         <div style="margin: 30px 0; text-align: center;">
           <a href="${resetUrl}" style="background-color: #8083ff; color: #0d0096; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
         </div>
         <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
-        <p style="font-size: 12px; color: #908fa0; border-top: 1px solid #464554; padding-top: 10px; margin-top: 30px;">This is an automated message from Phonebook AI Enterprise System.</p>
+        <p style="font-size: 12px; color: #908fa0; border-top: 1px solid #464554; padding-top: 10px; margin-top: 30px;">This is an automated message from PhoneBook Enterprise System.</p>
       </div>
     `;
 
     const mailResult = await sendEmail({
       to: user.email,
-      subject: 'Phonebook AI Password Reset Request',
+      subject: 'PhoneBook Password Reset Request',
       html: htmlMessage
     });
 
@@ -223,11 +223,56 @@ const logout = async (req, res) => {
   });
 };
 
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      res.status(404);
+      return next(new Error('User not found'));
+    }
+
+    const { name, email } = req.body;
+    if (name) user.name = name;
+
+    if (email && email.toLowerCase() !== user.email.toLowerCase()) {
+      const emailExists = await User.findOne({ email: email.toLowerCase() });
+      if (emailExists) {
+        res.status(400);
+        return next(new Error('Email is already in use by another account'));
+      }
+      user.email = email.toLowerCase();
+    }
+
+    if (req.file) {
+      user.avatar = await uploadImage(req.file.buffer, 'avatars');
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   getProfile,
   forgotPassword,
   resetPassword,
-  logout
+  logout,
+  updateProfile
 };

@@ -246,7 +246,7 @@ const ContactModal = ({ isOpen, onClose, contact, onSaveSuccess }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-md h-[36px] border border-primary/20 hover:bg-surface-variant/30 text-on-surface rounded text-xs transition-colors"
+            className="px-md h-[36px] border border-outline/25 hover:bg-surface-container-high hover:border-outline/40 text-on-surface rounded-full text-xs font-semibold hover:scale-105 active:scale-95 transition-all duration-200"
           >
             Cancel
           </button>
@@ -254,7 +254,7 @@ const ContactModal = ({ isOpen, onClose, contact, onSaveSuccess }) => {
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="px-md h-[36px] bg-primary-container hover:opacity-95 text-on-primary-container rounded text-xs transition-all flex items-center gap-xs disabled:opacity-50 shadow-[0_0_12px_rgba(184,227,233,0.15)]"
+            className="px-md h-[36px] bg-primary-container text-on-primary-container rounded-full text-xs font-bold transition-all flex items-center gap-xs disabled:opacity-50 shadow-[0_0_16px_rgba(var(--color-primary-container),0.3)] hover:shadow-[0_0_24px_rgba(var(--color-primary-container),0.5)] hover:scale-105 active:scale-95 duration-200"
           >
             {isSubmitting ? 'Saving...' : 'Save Contact'}
             {!isSubmitting && <span className="material-symbols-outlined text-[16px]">save</span>}

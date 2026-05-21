@@ -1,6 +1,6 @@
 const sendEmail = async ({ to, subject, html }) => {
   const apiKey = process.env.BREVO_API_KEY;
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@phonebookai.com';
+  const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@phonebook.com';
 
   if (!apiKey) {
     console.log('=== DEVELOPMENT MODE: MOCK EMAIL SENT ===');
@@ -21,7 +21,7 @@ const sendEmail = async ({ to, subject, html }) => {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        sender: { name: 'Phonebook AI', email: senderEmail },
+        sender: { name: 'PhoneBook', email: senderEmail },
         to: [{ email: to }],
         subject,
         htmlContent: html,
