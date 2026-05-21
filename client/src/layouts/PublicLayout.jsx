@@ -108,8 +108,9 @@ const PublicLayout = ({ children }) => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-outline/10 bg-surface-container-low/30 py-xl mt-xl relative z-10 w-full">
-        <div className="max-w-7xl mx-auto px-md md:px-lg grid grid-cols-1 md:grid-cols-3 gap-xl">
+      <footer className="border-t border-outline/10 bg-surface-container-low/30 py-xl mt-xl relative z-10 w-full animate-fade-in">
+        <div className="max-w-7xl mx-auto px-md md:px-lg grid grid-cols-1 md:grid-cols-3 gap-xl items-start">
+          {/* Brand & Description (Left side) */}
           <div className="space-y-md md:col-span-2">
             <div className="flex items-center gap-sm">
               <img src={logoImg} alt="PhoneBook" className="h-8 w-8 rounded-full object-cover border border-primary/20" />
@@ -119,38 +120,53 @@ const PublicLayout = ({ children }) => {
               Enterprise-grade smart directory engine. Designed with ultra-fast search suggestions, customizable tag systems, and strict client data privacy isolation.
             </p>
           </div>
-          <div className="space-y-sm">
-            <h4 className="text-xs font-semibold text-primary uppercase tracking-wider">Enterprise</h4>
-            <ul className="space-y-xs text-xs text-on-surface-variant">
-              <li><span className="opacity-60">Status: Active Node</span></li>
-              <li><span className="opacity-60">Version: 1.0.0</span></li>
-              <li><span className="opacity-60">Data Privacy: Isolated Node</span></li>
-            </ul>
+
+          {/* Enterprise & Developer details (Right side) */}
+          <div className="space-y-md flex flex-col items-start md:items-end">
+            <div className="space-y-xs text-left md:text-right">
+              <h4 className="text-xs font-semibold text-primary uppercase tracking-wider">Enterprise Status</h4>
+              <ul className="space-y-xs text-xs text-on-surface-variant">
+                <li className="flex items-center md:justify-end gap-xs">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse"></span>
+                  <span className="opacity-60">Status:</span>
+                  <span className="font-medium text-emerald-500">Active Node</span>
+                </li>
+                <li className="flex items-center md:justify-end gap-xs">
+                  <span className="opacity-60">Version:</span>
+                  <span className="font-medium text-on-surface">1.0.0</span>
+                </li>
+                <li className="flex items-center md:justify-end gap-xs">
+                  <span className="material-symbols-outlined text-[14px] text-primary">security</span>
+                  <span className="opacity-60">Privacy:</span>
+                  <span className="font-medium text-on-surface">Isolated Node</span>
+                </li>
+              </ul>
+            </div>
+            <div className="pt-xs w-full flex md:justify-end">
+              <a
+                href="https://shivanandvn.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-xs px-sm py-[6px] bg-surface-container-high/40 hover:bg-primary-container/20 border border-outline/10 rounded-lg text-[10px] font-semibold text-primary transition-all duration-300 hover:scale-105 active:scale-95 shadow-[0_0_12px_rgba(var(--color-primary-container),0.05)]"
+              >
+                <span className="material-symbols-outlined text-[12px]">code</span>
+                <span>Developed by Shivanand VN</span>
+              </a>
+            </div>
           </div>
         </div>
+
+        {/* Footer Bottom Bar */}
         <div className="max-w-7xl mx-auto px-md md:px-lg border-t border-outline/5 mt-lg pt-md flex flex-col md:flex-row items-center justify-between gap-sm text-[11px] text-on-surface-variant">
           {/* Left: Privacy policy and terms of service */}
-          <div className="flex gap-md order-2 md:order-1">
+          <div className="flex gap-md">
             <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link>
             <Link to="/terms-of-service" className="hover:text-primary transition-colors">Terms of Service</Link>
           </div>
 
-          {/* Middle: all rights reserved */}
-          <div className="order-1 md:order-2">
+          {/* Right: all rights reserved */}
+          <div>
             <span>&copy; {new Date().getFullYear()} PhoneBook. All rights reserved.</span>
-          </div>
-
-          {/* Right: developed by card with portfolio link */}
-          <div className="order-3 md:order-3">
-            <a
-              href="https://shivanandvn.vercel.app/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-xs px-sm py-[6px] bg-surface-container-high/40 hover:bg-primary-container/20 border border-outline/10 rounded-lg text-[10px] font-semibold text-primary transition-all duration-300 hover:scale-105 active:scale-95"
-            >
-              <span className="material-symbols-outlined text-[12px]">code</span>
-              <span>Developed by Shivanand VN</span>
-            </a>
           </div>
         </div>
       </footer>
