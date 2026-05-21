@@ -1,8 +1,9 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { API_URL, apiFetch } from '../config/api';
 
 const AuthContext = createContext(null);
 
-export const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://phonebook-mpno.onrender.com/api' : 'http://localhost:5000/api');
+export { API_URL };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -19,11 +20,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const response = await fetch(`${API_URL}/auth/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await apiFetch('/api/auth/profile');
 
         const data = await response.json();
         if (response.ok && data.success) {
@@ -39,15 +36,23 @@ export const AuthProvider = ({ children }) => {
     };
 
     loadUser();
+
+    // Listen to automatic logout events from API client
+    const handleAutoLogout = () => {
+      logout();
+    };
+    window.addEventListener('auth-logout', handleAutoLogout);
+    return () => {
+      window.removeEventListener('auth-logout', handleAutoLogout);
+    };
   }, [token]);
 
   // Login User
   const login = async (email, password) => {
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await apiFetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
 
@@ -68,7 +73,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (formData) => {
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
+      const response = await apiFetch('/api/auth/register', {
         method: 'POST',
         body: formData
       });
@@ -89,9 +94,8 @@ export const AuthProvider = ({ children }) => {
   // Update Profile (name + avatar)
   const updateProfile = async (formData) => {
     try {
-      const response = await fetch(`${API_URL}/auth/profile`, {
+      const response = await apiFetch('/api/auth/profile', {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
         body: formData
       });
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth, API_URL } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../config/api';
 
 const ContactModal = ({ isOpen, onClose, contact, onSaveSuccess }) => {
   const { token } = useAuth();
@@ -79,14 +80,11 @@ const ContactModal = ({ isOpen, onClose, contact, onSaveSuccess }) => {
     }
 
     try {
-      const url = contact ? `${API_URL}/contacts/${contact._id}` : `${API_URL}/contacts`;
+      const url = contact ? `/api/contacts/${contact._id}` : `/api/contacts`;
       const method = contact ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
         body: formData
       });
 

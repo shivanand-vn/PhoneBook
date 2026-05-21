@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth, API_URL } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../config/api';
 import ContactModal from '../components/ContactModal';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -29,11 +30,7 @@ const ContactDetails = () => {
   const fetchContactDetails = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/contacts/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await apiFetch(`/api/contacts/${id}`);
       const data = await response.json();
       if (response.ok && data.success) {
         setContact(data.contact);
@@ -55,11 +52,8 @@ const ContactDetails = () => {
 
   const handleFavoriteToggle = async () => {
     try {
-      const response = await fetch(`${API_URL}/contacts/${id}/favorite`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const response = await apiFetch(`/api/contacts/${id}/favorite`, {
+        method: 'PATCH'
       });
       const data = await response.json();
       if (response.ok && data.success) {
@@ -78,11 +72,8 @@ const ContactDetails = () => {
   const handleConfirmDelete = async () => {
     setIsDeleteConfirmOpen(false);
     try {
-      const response = await fetch(`${API_URL}/contacts/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const response = await apiFetch(`/api/contacts/${id}`, {
+        method: 'DELETE'
       });
       if (response.ok) {
         navigate('/contacts');

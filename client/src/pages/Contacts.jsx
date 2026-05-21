@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth, API_URL } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../config/api';
 import ContactModal from '../components/ContactModal';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -41,9 +42,7 @@ const Contacts = () => {
   useEffect(() => {
     const fetchMetadata = async () => {
       try {
-        const response = await fetch(`${API_URL}/contacts?limit=1000`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await apiFetch('/api/contacts?limit=1000');
         const data = await response.json();
         if (response.ok && data.success) {
           const tagsSet = new Set();
@@ -79,8 +78,8 @@ const Contacts = () => {
     setLoading(true);
     try {
       const endpoint = searchQuery.trim() 
-        ? `${API_URL}/contacts/search?q=${encodeURIComponent(searchQuery.trim())}`
-        : `${API_URL}/contacts`;
+        ? `/api/contacts/search?q=${encodeURIComponent(searchQuery.trim())}`
+        : `/api/contacts`;
 
       let queryParams = [];
       if (!searchQuery.trim()) {
@@ -94,11 +93,7 @@ const Contacts = () => {
 
       const url = queryParams.length > 0 ? `${endpoint}?${queryParams.join('&')}` : endpoint;
 
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await apiFetch(url);
 
       const data = await response.json();
       if (response.ok && data.success) {
@@ -142,11 +137,8 @@ const Contacts = () => {
   const handleFavoriteToggle = async (e, contactId) => {
     e.stopPropagation();
     try {
-      const response = await fetch(`${API_URL}/contacts/${contactId}/favorite`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const response = await apiFetch(`/api/contacts/${contactId}/favorite`, {
+        method: 'PATCH'
       });
       const data = await response.json();
       if (response.ok && data.success) {
@@ -167,11 +159,8 @@ const Contacts = () => {
     const contactId = deleteConfirmId;
     setDeleteConfirmId(null);
     try {
-      const response = await fetch(`${API_URL}/contacts/${contactId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      const response = await apiFetch(`/api/contacts/${contactId}`, {
+        method: 'DELETE'
       });
       if (response.ok) {
         showToast('Contact deleted successfully');

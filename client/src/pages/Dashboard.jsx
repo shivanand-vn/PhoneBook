@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth, API_URL } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
 import {
   Chart as ChartJS,
@@ -35,11 +36,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await fetch(`${API_URL}/contacts?limit=1000`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        const response = await apiFetch('/api/contacts?limit=1000');
         const data = await response.json();
         if (response.ok && data.success) {
           const list = data.contacts;

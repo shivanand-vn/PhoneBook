@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL } from '../context/AuthContext';
+import { apiFetch } from '../config/api';
 import logoImg from '../assets/logo.jpeg';
 
 const ForgotPassword = () => {
@@ -16,11 +16,8 @@ const ForgotPassword = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+      const response = await apiFetch('/api/auth/forgot-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ email })
       });
 

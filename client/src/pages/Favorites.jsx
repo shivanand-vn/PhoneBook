@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, API_URL } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../config/api';
 import ContactModal from '../components/ContactModal';
 
 const Favorites = () => {
@@ -20,9 +21,7 @@ const Favorites = () => {
   const fetchFavorites = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/contacts?favorite=true&limit=100`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiFetch('/api/contacts?favorite=true&limit=100');
       const data = await response.json();
       if (response.ok && data.success) {
         setContacts(data.contacts);
@@ -41,9 +40,8 @@ const Favorites = () => {
   const handleFavoriteToggle = async (e, contactId) => {
     e.stopPropagation();
     try {
-      const response = await fetch(`${API_URL}/contacts/${contactId}/favorite`, {
-        method: 'PATCH',
-        headers: { Authorization: `Bearer ${token}` }
+      const response = await apiFetch(`/api/contacts/${contactId}/favorite`, {
+        method: 'PATCH'
       });
       const data = await response.json();
       if (response.ok && data.success) {

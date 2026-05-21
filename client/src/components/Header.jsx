@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, API_URL } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
 import logoImg from '../assets/logo.jpeg';
 
@@ -39,9 +40,7 @@ const Header = ({ onMenuClick, onAddContactClick }) => {
 
     const delayDebounceFn = setTimeout(async () => {
       try {
-        const response = await fetch(`${API_URL}/contacts/suggestions?q=${searchQuery}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await apiFetch(`/api/contacts/suggestions?q=${searchQuery}`);
         const data = await response.json();
         if (response.ok && data.success) {
           setSuggestions(data.suggestions);

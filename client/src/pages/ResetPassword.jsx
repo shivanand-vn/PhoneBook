@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { API_URL } from '../context/AuthContext';
+import { apiFetch } from '../config/api';
 import logoImg from '../assets/logo.jpeg';
 
 const ResetPassword = () => {
@@ -30,11 +30,8 @@ const ResetPassword = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/reset-password`, {
+      const response = await apiFetch('/api/auth/reset-password', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ token, password })
       });
 
