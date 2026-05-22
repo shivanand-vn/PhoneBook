@@ -777,7 +777,7 @@ const Contacts = () => {
           <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setDuplicateCheckModal(null)} />
 
           {/* Modal Dialog */}
-          <div className="w-full max-w-[450px] glass border border-primary/20 rounded-xl shadow-[0_16px_36px_rgba(0,0,0,0.6)] z-10 overflow-hidden flex flex-col animate-scale-up">
+          <div className="w-full max-w-[500px] glass border border-primary/20 rounded-xl shadow-[0_16px_36px_rgba(0,0,0,0.6)] z-10 overflow-hidden flex flex-col animate-scale-up">
             {/* Header */}
             <div className="h-[56px] px-lg border-b border-outline/10 flex items-center justify-between bg-surface-container-low/80">
               <h3 className="font-headline-sm text-sm font-semibold text-primary flex items-center gap-xs">
@@ -800,7 +800,7 @@ const Contacts = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="px-lg pb-lg pt-xs flex flex-wrap justify-end gap-sm">
+            <div className="px-lg pb-lg pt-xs flex flex-row justify-end gap-sm">
               <button
                 onClick={() => setDuplicateCheckModal(null)}
                 className="h-10 px-md border border-outline/25 hover:bg-surface-container-high/50 text-on-surface rounded-full font-label-md text-xs transition-all hover:scale-105 active:scale-95 font-semibold"
