@@ -33,6 +33,8 @@ const Contacts = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [duplicateCheckModal, setDuplicateCheckModal] = useState(null);
+  const [importResult, setImportResult] = useState(null);
 
   // Unique companies and tags for filters
   const [allTags, setAllTags] = useState([]);
@@ -245,11 +247,80 @@ const Contacts = () => {
     }
   };
 
+  const proceedWithImport = async (importedContacts, duplicates, duplicateAction) => {
+    showToast('Importing contacts...');
+    let successCount = 0;
+    let failCount = 0;
+    let errorsList = [];
+
+    for (const contact of importedContacts) {
+      const duplicateRecord = duplicates.find(d => 
+        d.contact.phone === contact.phone || 
+        (d.contact.email && contact.email && d.contact.email.toLowerCase() === contact.email.toLowerCase())
+      );
+      
+      try {
+        const formData = new FormData();
+        formData.append('name', contact.name);
+        formData.append('phone', contact.phone);
+        formData.append('email', contact.email);
+        formData.append('company', contact.company);
+        formData.append('address', contact.address);
+        formData.append('tags', contact.tags.join(', '));
+        formData.append('favorite', contact.favorite);
+
+        let response;
+        if (duplicateRecord) {
+          if (duplicateAction === 'skip') {
+            failCount++;
+            errorsList.push(`${contact.name}: Skipped (already exists)`);
+            continue;
+          } else {
+            // Overwrite: send PUT request to update existing
+            response = await apiFetch(`/api/contacts/${duplicateRecord.existingId}`, {
+              method: 'PUT',
+              body: formData
+            });
+          }
+        } else {
+          // Create new contact
+          response = await apiFetch('/api/contacts', {
+            method: 'POST',
+            body: formData
+          });
+        }
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          successCount++;
+        } else {
+          failCount++;
+          errorsList.push(`${contact.name}: ${data.message || 'Validation error'}`);
+        }
+      } catch (err) {
+        failCount++;
+        errorsList.push(`${contact.name}: Connection error`);
+      }
+    }
+
+    if (successCount > 0) {
+      showToast(`Successfully processed ${successCount} contacts!`);
+      fetchContacts();
+    }
+    
+    // Set import results to display in the custom modal
+    setImportResult({
+      successCount,
+      failCount,
+      errorsList
+    });
+  };
+
   const handleImportContacts = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    showToast('Importing contacts...');
+    showToast('Reading CSV file...');
     e.target.value = '';
 
     const reader = new FileReader();
@@ -333,50 +404,51 @@ const Contacts = () => {
           return;
         }
 
-        let successCount = 0;
-        let failCount = 0;
-        let errorsList = [];
+        // Fetch all existing contacts to scan for duplicates
+        showToast('Scanning for duplicate contacts...');
+        const response = await apiFetch('/api/contacts?limit=10000');
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          throw new Error('Failed to retrieve existing contacts for duplicate check');
+        }
+
+        const existingContacts = data.contacts || [];
+        const phoneMap = {};
+        const emailMap = {};
+        existingContacts.forEach(c => {
+          if (c.phone) phoneMap[c.phone] = c._id;
+          if (c.email) emailMap[c.email.toLowerCase()] = c._id;
+        });
+
+        const duplicates = [];
+        const nonDuplicates = [];
 
         for (const contact of importedContacts) {
-          try {
-            const formData = new FormData();
-            formData.append('name', contact.name);
-            formData.append('phone', contact.phone);
-            formData.append('email', contact.email);
-            formData.append('company', contact.company);
-            formData.append('address', contact.address);
-            formData.append('tags', contact.tags.join(', '));
-            formData.append('favorite', contact.favorite);
+          const existingPhoneId = phoneMap[contact.phone];
+          const existingEmailId = contact.email ? emailMap[contact.email.toLowerCase()] : null;
+          const existingId = existingPhoneId || existingEmailId;
 
-            const response = await apiFetch('/api/contacts', {
-              method: 'POST',
-              body: formData
-            });
-
-            const data = await response.json();
-            if (response.ok && data.success) {
-              successCount++;
-            } else {
-              failCount++;
-              errorsList.push(`${contact.name}: ${data.message || 'Validation error'}`);
-            }
-          } catch (err) {
-            failCount++;
-            errorsList.push(`${contact.name}: connection error`);
+          if (existingId) {
+            duplicates.push({ contact, existingId });
+          } else {
+            nonDuplicates.push(contact);
           }
         }
 
-        if (successCount > 0) {
-          showToast(`Successfully imported ${successCount} contacts!`);
-          fetchContacts();
-        }
-        
-        if (failCount > 0) {
-          alert(`Failed to import ${failCount} contacts:\n${errorsList.slice(0, 5).join('\n')}${errorsList.length > 5 ? '\n...and more' : ''}`);
+        if (duplicates.length > 0) {
+          // Open the custom duplicate options prompt modal
+          setDuplicateCheckModal({
+            importedContacts,
+            duplicates,
+            nonDuplicates
+          });
+        } else {
+          // Import immediately if no duplicates exist
+          await proceedWithImport(importedContacts, [], 'skip');
         }
       } catch (err) {
         console.error(err);
-        showToast('Error reading or parsing CSV file', 'error');
+        showToast(err.message || 'Error processing CSV file', 'error');
       }
     };
     reader.readAsText(file);
@@ -420,14 +492,14 @@ const Contacts = () => {
             className="flex-1 md:flex-none flex items-center justify-center gap-xs px-md py-sm border border-outline/30 hover:border-primary text-on-surface hover:text-primary rounded-full font-label-lg text-label-lg transition-all duration-200 hover:scale-105 active:scale-95 font-bold bg-surface-container/40"
             title="Export contacts to CSV"
           >
-            <span className="material-symbols-outlined text-[18px]">download</span> Export
+            <span className="material-symbols-outlined text-[18px]">upload</span> Export
           </button>
           
           <label 
             className="flex-1 md:flex-none flex items-center justify-center gap-xs px-md py-sm border border-outline/30 hover:border-primary text-on-surface hover:text-primary rounded-full font-label-lg text-label-lg transition-all duration-200 hover:scale-105 active:scale-95 font-bold bg-surface-container/40 cursor-pointer"
             title="Import contacts from CSV"
           >
-            <span className="material-symbols-outlined text-[18px]">upload</span> Import
+            <span className="material-symbols-outlined text-[18px]">download</span> Import
             <input 
               type="file" 
               accept=".csv" 
@@ -697,6 +769,129 @@ const Contacts = () => {
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteConfirmId(null)}
       />
+
+      {/* Duplicate action select modal */}
+      {duplicateCheckModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-md animate-fade-in">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setDuplicateCheckModal(null)} />
+
+          {/* Modal Dialog */}
+          <div className="w-full max-w-[450px] glass border border-primary/20 rounded-xl shadow-[0_16px_36px_rgba(0,0,0,0.6)] z-10 overflow-hidden flex flex-col animate-scale-up">
+            {/* Header */}
+            <div className="h-[56px] px-lg border-b border-outline/10 flex items-center justify-between bg-surface-container-low/80">
+              <h3 className="font-headline-sm text-sm font-semibold text-primary flex items-center gap-xs">
+                <span className="material-symbols-outlined text-[20px] text-yellow-500">warning</span>
+                <span>Duplicate Contacts Found</span>
+              </h3>
+              <button onClick={() => setDuplicateCheckModal(null)} className="text-on-surface-variant hover:text-primary transition-colors p-xs rounded-full">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-lg space-y-md">
+              <p className="font-body-md text-sm text-on-surface-variant leading-relaxed">
+                We detected <strong>{duplicateCheckModal.duplicates.length}</strong> contacts in your CSV that already exist in your phonebook (matching phone number or email).
+              </p>
+              <p className="font-body-md text-xs text-on-surface-variant/80">
+                Choose how you want to proceed with these contacts:
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="px-lg pb-lg pt-xs flex flex-wrap justify-end gap-sm">
+              <button
+                onClick={() => setDuplicateCheckModal(null)}
+                className="h-10 px-md border border-outline/25 hover:bg-surface-container-high/50 text-on-surface rounded-full font-label-md text-xs transition-all hover:scale-105 active:scale-95 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const { importedContacts, duplicates } = duplicateCheckModal;
+                  setDuplicateCheckModal(null);
+                  proceedWithImport(importedContacts, duplicates, 'skip');
+                }}
+                className="h-10 px-md bg-secondary text-on-secondary rounded-full font-label-md text-xs transition-all hover:scale-105 active:scale-95 font-semibold"
+              >
+                Skip Duplicates
+              </button>
+              <button
+                onClick={() => {
+                  const { importedContacts, duplicates } = duplicateCheckModal;
+                  setDuplicateCheckModal(null);
+                  proceedWithImport(importedContacts, duplicates, 'overwrite');
+                }}
+                className="h-10 px-md bg-primary text-on-primary rounded-full font-label-md text-xs transition-all hover:scale-105 active:scale-95 font-semibold"
+              >
+                Overwrite Existing
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import summary / result warning modal */}
+      {importResult && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-md animate-fade-in">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setImportResult(null)} />
+
+          {/* Modal Dialog */}
+          <div className="w-full max-w-[500px] glass border border-primary/20 rounded-xl shadow-[0_16px_36px_rgba(0,0,0,0.6)] z-10 overflow-hidden flex flex-col animate-scale-up">
+            {/* Header */}
+            <div className="h-[56px] px-lg border-b border-outline/10 flex items-center justify-between bg-surface-container-low/80">
+              <h3 className="font-headline-sm text-sm font-semibold text-primary flex items-center gap-xs">
+                <span className="material-symbols-outlined text-[20px]">info</span>
+                <span>Import Summary</span>
+              </h3>
+              <button onClick={() => setImportResult(null)} className="text-on-surface-variant hover:text-primary transition-colors p-xs rounded-full">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-lg space-y-md">
+              <div className="flex gap-sm">
+                {importResult.successCount > 0 && (
+                  <div className="flex-1 bg-primary/10 border border-primary/20 rounded-lg p-sm text-center">
+                    <p className="text-xs text-primary-fixed-dim">Successfully Imported</p>
+                    <p className="text-lg font-bold text-primary">{importResult.successCount}</p>
+                  </div>
+                )}
+                {importResult.failCount > 0 && (
+                  <div className="flex-1 bg-error-container/10 border border-error/20 rounded-lg p-sm text-center">
+                    <p className="text-xs text-error-container">Failed / Skipped</p>
+                    <p className="text-lg font-bold text-error">{importResult.failCount}</p>
+                  </div>
+                )}
+              </div>
+
+              {importResult.errorsList.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-semibold text-on-surface mb-xs">Issues / Details:</h4>
+                  <div className="max-h-[200px] overflow-y-auto bg-surface-container-low border border-outline/10 rounded-lg p-sm space-y-xs font-mono text-[11px] text-on-surface-variant">
+                    {importResult.errorsList.map((err, idx) => (
+                      <div key={idx} className="border-b border-outline/5 pb-[2px] last:border-0">{err}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="px-lg pb-lg pt-xs flex justify-end">
+              <button
+                onClick={() => setImportResult(null)}
+                className="h-10 px-md bg-primary-container text-on-primary-container rounded-full font-label-md text-xs transition-all hover:scale-105 active:scale-95 font-semibold"
+              >
+                Okay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
