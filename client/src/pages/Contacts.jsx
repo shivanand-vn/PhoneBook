@@ -197,6 +197,191 @@ const Contacts = () => {
     setSearchParams({});
   };
 
+  const handleExportContacts = async () => {
+    try {
+      showToast('Exporting contacts...');
+      const response = await apiFetch('/api/contacts?limit=10000');
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to fetch contacts for export');
+      }
+
+      const allContacts = data.contacts;
+      if (allContacts.length === 0) {
+        showToast('No contacts to export', 'error');
+        return;
+      }
+
+      // Generate CSV Content
+      const headers = ['Name', 'Phone', 'Email', 'Company', 'Address', 'Tags', 'Favorite'];
+      const csvRows = [headers.join(',')];
+
+      for (const contact of allContacts) {
+        const row = [
+          `"${(contact.name || '').replace(/"/g, '""')}"`,
+          `"${(contact.phone || '').replace(/"/g, '""')}"`,
+          `"${(contact.email || '').replace(/"/g, '""')}"`,
+          `"${(contact.company || '').replace(/"/g, '""')}"`,
+          `"${(contact.address || '').replace(/"/g, '""')}"`,
+          `"${(contact.tags ? contact.tags.join('; ') : '').replace(/"/g, '""')}"`,
+          contact.favorite ? 'true' : 'false'
+        ];
+        csvRows.push(row.join(','));
+      }
+
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'contacts.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('Contacts exported successfully!');
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'Failed to export contacts', 'error');
+    }
+  };
+
+  const handleImportContacts = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    showToast('Importing contacts...');
+    e.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const text = event.target.result;
+        const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+        
+        if (lines.length <= 1) {
+          showToast('CSV file is empty or missing headers', 'error');
+          return;
+        }
+
+        const parseCSVLine = (lineStr) => {
+          const result = [];
+          let current = '';
+          let inQuotes = false;
+          for (let i = 0; i < lineStr.length; i++) {
+            const char = lineStr[i];
+            if (char === '"') {
+              if (inQuotes && lineStr[i + 1] === '"') {
+                current += '"';
+                i++; // skip next quote
+              } else {
+                inQuotes = !inQuotes;
+              }
+            } else if (char === ',' && !inQuotes) {
+              result.push(current.trim());
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          result.push(current.trim());
+          return result;
+        };
+
+        const headers = parseCSVLine(lines[0]).map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase());
+        
+        const nameIdx = headers.indexOf('name');
+        const phoneIdx = headers.indexOf('phone');
+        const emailIdx = headers.indexOf('email');
+        const companyIdx = headers.indexOf('company');
+        const addressIdx = headers.indexOf('address');
+        const tagsIdx = headers.indexOf('tags');
+        const favoriteIdx = headers.indexOf('favorite');
+
+        if (nameIdx === -1 || phoneIdx === -1) {
+          showToast('CSV must contain "Name" and "Phone" columns', 'error');
+          return;
+        }
+
+        const importedContacts = [];
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i];
+          const columns = parseCSVLine(line).map(col => col.replace(/^["']|["']$/g, '').replace(/""/g, '"').trim());
+
+          const name = columns[nameIdx] || '';
+          const phone = columns[phoneIdx] || '';
+          const email = emailIdx !== -1 ? columns[emailIdx] || '' : '';
+          const company = companyIdx !== -1 ? columns[companyIdx] || '' : '';
+          const address = addressIdx !== -1 ? columns[addressIdx] || '' : '';
+          const tagsRaw = tagsIdx !== -1 ? columns[tagsIdx] || '' : '';
+          const favoriteRaw = favoriteIdx !== -1 ? columns[favoriteIdx] || '' : '';
+
+          if (!name || !phone) continue;
+
+          importedContacts.push({
+            name,
+            phone,
+            email,
+            company,
+            address,
+            tags: tagsRaw ? tagsRaw.split(/;\s*|,\s*/).map(t => t.trim()) : [],
+            favorite: favoriteRaw.toLowerCase() === 'true'
+          });
+        }
+
+        if (importedContacts.length === 0) {
+          showToast('No valid contact entries found in CSV', 'error');
+          return;
+        }
+
+        let successCount = 0;
+        let failCount = 0;
+        let errorsList = [];
+
+        for (const contact of importedContacts) {
+          try {
+            const formData = new FormData();
+            formData.append('name', contact.name);
+            formData.append('phone', contact.phone);
+            formData.append('email', contact.email);
+            formData.append('company', contact.company);
+            formData.append('address', contact.address);
+            formData.append('tags', contact.tags.join(', '));
+            formData.append('favorite', contact.favorite);
+
+            const response = await apiFetch('/api/contacts', {
+              method: 'POST',
+              body: formData
+            });
+
+            const data = await response.json();
+            if (response.ok && data.success) {
+              successCount++;
+            } else {
+              failCount++;
+              errorsList.push(`${contact.name}: ${data.message || 'Validation error'}`);
+            }
+          } catch (err) {
+            failCount++;
+            errorsList.push(`${contact.name}: connection error`);
+          }
+        }
+
+        if (successCount > 0) {
+          showToast(`Successfully imported ${successCount} contacts!`);
+          fetchContacts();
+        }
+        
+        if (failCount > 0) {
+          alert(`Failed to import ${failCount} contacts:\n${errorsList.slice(0, 5).join('\n')}${errorsList.length > 5 ? '\n...and more' : ''}`);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error reading or parsing CSV file', 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const getInitials = (name) => {
     if (!name) return '??';
     return name
@@ -226,10 +411,31 @@ const Contacts = () => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-lg gap-md">
         <div>
-          <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-xs">Contacts Database</h2>
+          <h2 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-xs">Contacts</h2>
           <p className="font-body-sm text-body-sm text-on-surface-variant">Manage and organize your professional network.</p>
         </div>
-        <div className="flex gap-sm w-full md:w-auto">
+        <div className="flex flex-wrap gap-sm w-full md:w-auto">
+          <button 
+            onClick={handleExportContacts}
+            className="flex-1 md:flex-none flex items-center justify-center gap-xs px-md py-sm border border-outline/30 hover:border-primary text-on-surface hover:text-primary rounded-full font-label-lg text-label-lg transition-all duration-200 hover:scale-105 active:scale-95 font-bold bg-surface-container/40"
+            title="Export contacts to CSV"
+          >
+            <span className="material-symbols-outlined text-[18px]">download</span> Export
+          </button>
+          
+          <label 
+            className="flex-1 md:flex-none flex items-center justify-center gap-xs px-md py-sm border border-outline/30 hover:border-primary text-on-surface hover:text-primary rounded-full font-label-lg text-label-lg transition-all duration-200 hover:scale-105 active:scale-95 font-bold bg-surface-container/40 cursor-pointer"
+            title="Import contacts from CSV"
+          >
+            <span className="material-symbols-outlined text-[18px]">upload</span> Import
+            <input 
+              type="file" 
+              accept=".csv" 
+              onChange={handleImportContacts} 
+              className="hidden" 
+            />
+          </label>
+
           <button 
             onClick={handleOpenAddModal}
             className="flex-1 md:flex-none flex items-center justify-center gap-xs px-md py-sm bg-primary-container text-on-primary-container rounded-full font-label-lg text-label-lg transition-all duration-300 shadow-[0_0_16px_rgba(var(--color-primary-container),0.3)] hover:shadow-[0_0_24px_rgba(var(--color-primary-container),0.5)] hover:scale-105 active:scale-95 font-bold"
@@ -291,7 +497,7 @@ const Contacts = () => {
             </div>
           </div>
           <div className="mt-md pt-sm border-t border-primary/10 flex flex-wrap gap-sm items-center justify-between">
-            <div className="flex flex-wrap gap-sm">
+            <div className="flex flex-wrap gap-sm items-center">
               {/* Favorites toggle */}
               <button
                 onClick={() => { setShowFavoritesOnly(!showFavoritesOnly); setPage(1); }}
@@ -327,17 +533,17 @@ const Contacts = () => {
                 <option value="recently_added">Sort: Recently Added</option>
                 <option value="company">Sort: Company</option>
               </select>
-            </div>
 
-            {/* Clear filters trigger */}
-            {(searchQuery || showFavoritesOnly || selectedTag || selectedCompany || sortBy !== 'name') && (
-              <button
-                onClick={clearFilters}
-                className="text-xs text-primary-fixed-dim hover:text-primary transition-colors flex items-center gap-xs"
-              >
-                <span className="material-symbols-outlined text-[14px]">filter_alt_off</span> Reset
-              </button>
-            )}
+              {/* Clear filters trigger */}
+              {(searchQuery || showFavoritesOnly || selectedTag || selectedCompany || sortBy !== 'name') && (
+                <button
+                  onClick={clearFilters}
+                  className="text-xs text-primary-fixed-dim hover:text-primary transition-colors flex items-center gap-xs ml-xs"
+                >
+                  <span className="material-symbols-outlined text-[14px]">filter_alt_off</span> Reset
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
